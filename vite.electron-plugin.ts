@@ -1,6 +1,6 @@
 import { ConfigEnv, Plugin, UserConfig, ViteDevServer } from 'vite'
+import { type ChildProcess, spawn } from 'child_process'
 import electron from 'electron'
-import { spawn } from 'child_process'
 
 export interface ElectronPluginOptions {
   /**
@@ -18,6 +18,7 @@ export default function electronPlugin(options: ElectronPluginOptions = {}): Plu
     },
     configureServer(server: ViteDevServer) {
       const { entry = 'main.js' } = options
+      let electronProcess: ChildProcess | null = null
 
       const resolvedUrl =
         server.resolvedUrls?.local[0] ||
@@ -28,12 +29,62 @@ export default function electronPlugin(options: ElectronPluginOptions = {}): Plu
 
       const electronCmd = electron.toString()
 
-      const electronProcess = spawn(electronCmd, [entry], {
-        stdio: 'inherit',
-        env: {
-          ...process.env,
-        },
+      const startElectron = () => {
+        if (electronProcess) {
+          electronProcess.removeAllListeners()
+          electronProcess.kill('SIGINT')
+        }
+
+        electronProcess = spawn(electronCmd, [entry], {
+          stdio: 'inherit',
+          env: {
+            ...process.env,
+          },
+        })
+
+        electronProcess.on('exit', () => {
+          server.close()
+        })
+      }
+
+      server.httpServer?.once('listening', () => {
+        startElectron()
       })
+
+      server.httpServer?.on('close', () => {
+        electronProcess?.kill()
+      })
+
+      const interval = setInterval(async function () {
+        if (electronProcess?.exitCode === null || electronProcess?.exitCode === undefined) {
+          // 开发模式 正常运行
+        } else {
+          if (electronProcess?.exitCode === 0) {
+            console.log(`electron exit success: ${electronProcess?.exitCode}`)
+          } else if (electronProcess?.exitCode === 1) {
+            console.log(`electron exit: ${electronProcess?.exitCode}`)
+          } else {
+            console.error(`electron exit error: ${electronProcess?.exitCode}`)
+          }
+
+          // 取消延时
+          clearInterval(interval)
+
+          // 关闭 vite
+          await server
+            .close()
+            .then(() => {
+              console.log(`vite close success`)
+            })
+            .catch((reason) => {
+              console.error(`vite close error`, reason)
+            })
+            .finally(() => {
+              console.log(`vite close finally`)
+              process.exit(0)
+            })
+        }
+      }, 1_000)
     },
   }
 }

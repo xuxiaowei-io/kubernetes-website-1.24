@@ -13,6 +13,12 @@ export default defineConfig({
     vueDevTools(),
     electronPlugin({
       entry: 'main.js',
+      copy: [
+        {
+          source: 'renderer.js',
+          target: 'dist/renderer.js',
+        },
+      ],
     }),
   ],
   resolve: {

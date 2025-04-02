@@ -15,7 +15,6 @@
     "pre:yarn": "yarn install --registry https://registry.npmmirror.com || yarn install --registry https://registry.npmjs.org",
     "pre:pnpm": "pnpm install --registry https://registry.npmmirror.com || pnpm install --registry https://registry.npmjs.org",
     "dev": "vite",
-    "start": "electron .",
     "build-only": "vite build",
     "build": "run-p type-check \"build-only {@}\" --",
     "preview": "vite preview",
@@ -25,7 +24,7 @@
     "lint:oxlint": "oxlint . --fix -D correctness --ignore-path .gitignore",
     "lint:eslint": "eslint . --fix",
     "lint": "run-s lint:*",
-    "format": "prettier --write src/"
+    "format": "prettier --write e2e/ src/ .*.json *.json *.js *.ts"
   },
   "repository": {
     "type": "git",

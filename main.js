@@ -5,10 +5,10 @@ console.log('Hello from Electron 👋')
 const createWindow = () => {
   const mainWindow = new BrowserWindow({
     width: 800,
-    height: 600
+    height: 600,
   })
 
-  mainWindow.loadURL('http://localhost:5173/')
+  mainWindow.loadURL(process.env.VITE_DEV_SERVER_URL)
 
   mainWindow.webContents.openDevTools()
 }

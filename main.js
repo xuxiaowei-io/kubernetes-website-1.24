@@ -2,10 +2,11 @@ import { app, BrowserWindow } from 'electron'
 import path from 'path'
 import { fileURLToPath } from 'node:url'
 import log from 'electron-log'
+import Store from 'electron-store'
+
+const store = new Store()
 
 const __dirname = fileURLToPath(new URL('.', import.meta.url))
-
-console.log('Hello from Electron 👋')
 
 // 日志文件名，默认日志位置：
 // Windows 开发：C:\Users\%USERPROFILE%\AppData\Roaming\Electron\logs
@@ -22,12 +23,28 @@ log.scope.labelPadding = 8
 
 log.info('Hello from Electron 👋')
 
+let devTools = store.get('devTools')
+if (!(devTools instanceof Boolean)) {
+  store.set('devTools', process.env.NODE_ENV === 'development')
+}
+
+// Windows 开发：C:\Users\%USERPROFILE%\AppData\Roaming\Electron\config.json
+// Windows 安装：C:\Users\%USERPROFILE%\AppData\Roaming\项目名称\config.json
+// macOS 开发：/Users/$USER/Library/Application Support/Electron/config.json
+// macOS 安装：/Users/$USER/Library/Application Support/项目名称/config.json
+// Linux 开发：~/.config/Electron/config.json
+// Linux 运行 *.AppImage：~/.config/项目名/config.json
+// Linux 安装 *.deb：~/.config/项目名/config.json
+// Linux 安装 *.snap：~/snap/项目名/x1/.config/项目名/config.json
+log.info('electron-store path', store.path)
+
 const createWindow = () => {
   const mainWindow = new BrowserWindow({
     width: 800,
     height: 600,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
+      devTools: devTools,
     },
   })
 

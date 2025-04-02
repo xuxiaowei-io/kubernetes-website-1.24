@@ -9,11 +9,13 @@
   },
   "license": "Apache-2.0",
   "homepage": "https://github.com/xuxiaowei-com-cn/electron-vvt#readme",
+  "main": "main.js",
   "scripts": {
     "pre:npm": "npm install --registry https://registry.npmmirror.com || npm install --registry https://registry.npmjs.org",
     "pre:yarn": "yarn install --registry https://registry.npmmirror.com || yarn install --registry https://registry.npmjs.org",
     "pre:pnpm": "pnpm install --registry https://registry.npmmirror.com || pnpm install --registry https://registry.npmjs.org",
     "dev": "vite",
+    "start": "electron .",
     "build-only": "vite build",
     "build": "run-p type-check \"build-only {@}\" --",
     "preview": "vite preview",
@@ -30,6 +32,7 @@
     "url": "https://github.com/xuxiaowei-com-cn/electron-vvt.git"
   },
   "keywords": [
+    "electron",
     "pinia",
     "playwright",
     "typescript",
@@ -54,6 +57,7 @@
     "@vue/eslint-config-typescript": "14.5.0",
     "@vue/test-utils": "2.4.6",
     "@vue/tsconfig": "0.7.0",
+    "electron": "35.1.2",
     "eslint": "9.23.0",
     "eslint-plugin-oxlint": "0.16.4",
     "eslint-plugin-playwright": "2.2.0",

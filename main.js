@@ -1,8 +1,11 @@
-import { app, BrowserWindow } from 'electron'
+// Modules to control application life and create native browser window
+
+import { app, net, protocol, BrowserWindow } from 'electron'
 import path from 'path'
-import { fileURLToPath } from 'node:url'
+import { fileURLToPath } from 'url'
 import log from 'electron-log'
 import Store from 'electron-store'
+import fs from 'fs/promises'
 
 const store = new Store()
 
@@ -23,8 +26,14 @@ log.scope.labelPadding = 8
 
 log.info('Hello from Electron 👋')
 
-let devTools = store.get('devTools')
-if (!(devTools instanceof Boolean)) {
+// 创建一个新的日志记录器
+const loader = log.create({ logId: 'loader' })
+loader.transports.file.fileName = 'loader.log'
+loader.scope.defaultLabel = 'loader'
+loader.scope.labelPadding = 8
+
+const devTools = store.get('devTools')
+if (typeof devTools !== 'boolean') {
   store.set('devTools', process.env.NODE_ENV === 'development')
 }
 
@@ -38,7 +47,35 @@ if (!(devTools instanceof Boolean)) {
 // Linux 安装 *.snap：~/snap/项目名/x1/.config/项目名/config.json
 log.info('electron-store path', store.path)
 
+// 协议名称，自定义
+const scheme = 'vvt'
+
+// 新增协议注册函数
+const registerProtocol = () => {
+  protocol.handle(scheme, async (request) => {
+    const url = request.url
+    const parsedUrl = url.substring(scheme.length + 3).replace(/^(\.\.(\/|\\|$))+/, '')
+    const requestedPath = path.join(__dirname, parsedUrl)
+    const normalizedPath = path.normalize(requestedPath)
+
+    try {
+      await fs.access(normalizedPath, fs.constants.R_OK)
+      loader.info(
+        `url: ${url}, parsedUrl: ${parsedUrl}, requestedPath: ${requestedPath}, normalizedPath: ${normalizedPath}`,
+      )
+      return net.fetch(`file://${normalizedPath}`)
+    } catch {
+      const fallbackPath = path.join(__dirname, 'dist', 'index.html')
+      loader.warn(
+        `url: ${url}, parsedUrl: ${parsedUrl}, requestedPath: ${requestedPath}, fallbackPath: ${fallbackPath}`,
+      )
+      return net.fetch(`file://${fallbackPath}`)
+    }
+  })
+}
+
 const createWindow = () => {
+  // Create the browser window.
   const mainWindow = new BrowserWindow({
     width: 800,
     height: 600,
@@ -48,23 +85,49 @@ const createWindow = () => {
     },
   })
 
-  mainWindow.loadURL(process.env.VITE_SERVER_URL)
+  if (process.env.VITE_SERVER_URL) {
+    mainWindow.loadURL(process.env.VITE_SERVER_URL).catch((err) => {
+      log.error('mainWindow.loadURL', process.env.VITE_SERVER_URL, err)
+    })
 
-  mainWindow.webContents.openDevTools()
+    // Open the DevTools.
+    mainWindow.webContents.openDevTools()
+  } else {
+    // and load the index.html of the app.
+    mainWindow.loadURL(`${scheme}://dist/index.html`).catch((err) => {
+      log.error('mainWindow.loadURL', err)
+    })
+  }
 }
 
+// This method will be called when Electron has finished
+// initialization and is ready to create browser windows.
+// Some APIs can only be used after this event occurs.
 app.whenReady().then(() => {
+  // 只在生产环境注册协议
+  if (!process.env.VITE_SERVER_URL) {
+    registerProtocol()
+  }
+
   createWindow()
 
-  app.on('activate', () => {
+  app.on('activate', function () {
+    // On macOS it's common to re-create a window in the app when the
+    // dock icon is clicked and there are no other windows open.
     if (BrowserWindow.getAllWindows().length === 0) {
       createWindow()
     }
   })
 })
 
+// Quit when all windows are closed, except on macOS. There, it's common
+// for applications and their menu bar to stay active until the user quits
+// explicitly with Cmd + Q.
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {
     app.quit()
   }
 })
+
+// In this file you can include the rest of your app's specific main process
+// code. You can also put them in separate files and require them here.

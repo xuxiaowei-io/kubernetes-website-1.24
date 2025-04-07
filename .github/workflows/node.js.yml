@@ -1,0 +1,82 @@
+# This workflow will do a clean installation of node dependencies, cache/restore them, build the source code and run tests across different versions of node
+# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-nodejs
+
+name: Node.js CI
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+env:
+  GH_TOKEN: ${{ secrets.GH_TOKEN }}
+
+jobs:
+  build:
+
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      matrix:
+        node-version: [ 22.x ]
+        os: [ ubuntu-latest, macos-latest, windows-latest ]
+        # See supported Node.js release schedule at https://nodejs.org/en/about/releases/
+
+    steps:
+
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Create package-lock.json
+        shell: sh
+        run: |
+          cat << EOF > package-lock.json
+          {
+            "name": "electron-vvt",
+            "version": "0.0.1",
+            "lockfileVersion": 3,
+            "requires": true,
+            "packages": {
+              "": {
+                "name": "electron-vvt",
+                "version": "0.0.1",
+                "license": "Apache-2.0",
+                "engines": {
+                  "node": ">=20"
+                }
+              }
+            }
+          }
+          EOF
+
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'npm'
+
+      - name: Delete .npmrc
+        shell: sh
+        run: rm -rf .npmrc
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build with npm
+        run: npm run build
+
+      - name: List files in release folder
+        shell: sh
+        run: ls -la release/**/**
+
+      - name: Upload release artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-${{ matrix.os }}
+          path: |
+            release/**/**
+            !release/**/linux-unpacked
+            !release/**/win-unpacked
+            !release/**/*.app
+            !release/**/builder-debug.yml

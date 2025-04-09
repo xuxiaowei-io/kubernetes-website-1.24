@@ -63,7 +63,25 @@ jobs:
       - name: Install dependencies
         run: npm install
 
-      - name: Build with npm
+      - name: Mac Build with npm
+        if: ${{ matrix.os == 'macos-latest' }}
+        env:
+          CSC_LINK: ${{ secrets.MAC_CERT_BASE64 }}
+          CSC_KEY_PASSWORD: ${{ secrets.MAC_CERT_PASSWORD }}
+        run: npm run build
+
+      - name: Windows Build with npm
+        if: ${{ matrix.os == 'windows-latest' }}
+        env:
+          CSC_LINK: ${{ secrets.WINDOWS_CERT_BASE64 }}
+          CSC_KEY_PASSWORD: ${{ secrets.WINDOWS_CERT_PASSWORD }}
+        run: npm run build
+
+      - name: Linux Build with npm
+        if: ${{ matrix.os == 'ubuntu-latest' }}
+        env:
+          CSC_LINK: ${{ secrets.LINUX_CERT_BASE64 }}
+          CSC_KEY_PASSWORD: ${{ secrets.LINUX_CERT_PASSWORD }}
         run: npm run build
 
       - name: List files in release folder
@@ -76,7 +94,7 @@ jobs:
           name: release-${{ matrix.os }}
           path: |
             release/**/**
-            !release/**/linux-unpacked
-            !release/**/win-unpacked
-            !release/**/*.app
+            !release/**/linux**
+            !release/**/win**
+            !release/**/mac**
             !release/**/builder-debug.yml

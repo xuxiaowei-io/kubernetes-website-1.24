@@ -52,6 +52,7 @@ export default <Configuration>{
     target: [
       {
         target: 'AppImage',
+        arch: ['x64', 'arm64'],
       },
     ],
   },

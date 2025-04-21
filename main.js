@@ -7,6 +7,8 @@ import log from 'electron-log'
 import Store from 'electron-store'
 import fs from 'fs/promises'
 
+import './updater.js'
+
 const store = new Store()
 
 const __dirname = fileURLToPath(new URL('.', import.meta.url))

@@ -17,6 +17,7 @@
     "dev": "vite",
     "build-only": "vite build",
     "build": "run-p type-check \"build-only {@}\" -- && electron-builder",
+    "build:publish": "npm run build -- --publish always",
     "preview": "vite preview",
     "test:unit": "vitest",
     "test:e2e": "playwright test",
@@ -35,6 +36,7 @@
     "electron-builder",
     "electron-log",
     "electron-store",
+    "electron-updater",
     "pinia",
     "playwright",
     "typescript",
@@ -45,7 +47,8 @@
   ],
   "dependencies": {
     "electron-log": "5.3.4",
-    "electron-store": "10.0.1"
+    "electron-store": "10.0.1",
+    "electron-updater": "6.6.2"
   },
   "devDependencies": {
     "@playwright/test": "1.52.0",

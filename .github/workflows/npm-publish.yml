@@ -1,13 +1,13 @@
-# This workflow will do a clean installation of node dependencies, cache/restore them, build the source code and run tests across different versions of node
-# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-nodejs
+# This workflow will run tests using node and then publish a package to GitHub Packages when a release is created
+# For more information see: https://docs.github.com/en/actions/publishing-packages/publishing-nodejs-packages
 
-name: Node.js CI
+name: Node.js Publish
 
 on:
   push:
-    branches: [ "main" ]
-  pull_request:
-    branches: [ "main" ]
+    # This will trigger on any tag push
+    tags:
+      - '*'
 
 env:
   GH_TOKEN: ${{ secrets.GH_TOKEN }}
@@ -46,38 +46,23 @@ jobs:
       - name: Install dependencies
         run: npm install
 
-      - name: Mac Build with npm
+      - name: Mac Publish with npm
         if: ${{ matrix.os == 'macos-latest' }}
         env:
           CSC_LINK: ${{ secrets.MAC_CERT_BASE64 }}
           CSC_KEY_PASSWORD: ${{ secrets.MAC_CERT_PASSWORD }}
-        run: npm run build
+        run: npm run build:publish
 
-      - name: Windows Build with npm
+      - name: Windows Publish with npm
         if: ${{ matrix.os == 'windows-latest' }}
         env:
           CSC_LINK: ${{ secrets.WINDOWS_CERT_BASE64 }}
           CSC_KEY_PASSWORD: ${{ secrets.WINDOWS_CERT_PASSWORD }}
-        run: npm run build
+        run: npm run build:publish
 
-      - name: Linux Build with npm
+      - name: Linux Publish with npm
         if: ${{ matrix.os == 'ubuntu-latest' }}
         env:
           CSC_LINK: ${{ secrets.LINUX_CERT_BASE64 }}
           CSC_KEY_PASSWORD: ${{ secrets.LINUX_CERT_PASSWORD }}
-        run: npm run build
-
-      - name: List files in release folder
-        shell: sh
-        run: ls -la release/**/**
-
-      - name: Upload release artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: release-${{ matrix.os }}
-          path: |
-            release/**/**
-            !release/**/linux**
-            !release/**/win**
-            !release/**/mac**
-            !release/**/builder-debug.yml
+        run: npm run build:publish

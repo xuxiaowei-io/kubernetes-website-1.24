@@ -29,17 +29,30 @@ export default <Configuration>{
     // 预加载文件
     'preload.js',
     // 更新配置文件
-    'updater.js'
+    'updater.js',
   ],
   // 生成资源的目录
   directories: {
     output: 'release/${version}',
   },
+  mac: {
+    target: [
+      {
+        target: 'dmg',
+        arch: ['arm64', 'x64', 'universal'],
+      },
+      // 无论如何都要启用 zip，否则会影响 'dmg' 包中的自动更新
+      {
+        target: 'zip',
+        arch: ['arm64', 'x64', 'universal'],
+      },
+    ],
+  },
   linux: {
     target: [
       {
         target: 'AppImage',
-      }
-    ]
-  }
+      },
+    ],
+  },
 }

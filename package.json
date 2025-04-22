@@ -1,6 +1,7 @@
 {
-  "name": "electron-vvt",
-  "version": "0.0.3-dev.1",
+  "name": "kubernetes-v1.24",
+  "description": "Kubernetes v1.24 离线文档",
+  "version": "1.24.17",
   "type": "module",
   "author": {
     "name": "徐晓伟",
@@ -8,42 +9,29 @@
     "url": "https://xuxiaowei.com.cn"
   },
   "license": "Apache-2.0",
-  "homepage": "https://github.com/xuxiaowei-com-cn/electron-vvt#readme",
+  "homepage": "https://github.com/xuxiaowei-io/kubernetes-website-1.24#readme",
   "main": "main.js",
   "scripts": {
     "pre:npm": "npm install --registry https://registry.npmmirror.com || npm install --registry https://registry.npmjs.org",
     "pre:yarn": "yarn install --registry https://registry.npmmirror.com || yarn install --registry https://registry.npmjs.org",
     "pre:pnpm": "pnpm install --registry https://registry.npmmirror.com || pnpm install --registry https://registry.npmjs.org",
-    "dev": "vite",
-    "build-only": "vite build",
-    "build": "run-p type-check \"build-only {@}\" -- && electron-builder",
-    "build:publish": "npm run build -- --publish always",
-    "preview": "vite preview",
-    "test:unit": "vitest",
-    "test:e2e": "playwright test",
-    "type-check": "vue-tsc --build",
-    "lint:oxlint": "oxlint . --fix -D correctness --ignore-path .gitignore",
-    "lint:eslint": "eslint . --fix",
-    "lint": "run-s lint:*",
-    "format": "prettier --write e2e/ src/ .*.json *.json *.js *.ts"
+    "build": "electron-builder",
+    "build:publish": "npm run build -- --publish always"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/xuxiaowei-com-cn/electron-vvt.git"
+    "url": "https://github.com/xuxiaowei-io/kubernetes-website-1.24.git"
+  },
+  "bugs": {
+    "email": "xuxiaowei@xuxiaowei.com.cn",
+    "url": "https://github.com/xuxiaowei-io/kubernetes-website-1.24/issues"
   },
   "keywords": [
     "electron",
     "electron-builder",
     "electron-log",
     "electron-store",
-    "electron-updater",
-    "pinia",
-    "playwright",
-    "typescript",
-    "vite",
-    "vitest",
-    "vue",
-    "vue-router"
+    "electron-updater"
   ],
   "dependencies": {
     "electron-log": "5.3.4",
@@ -51,36 +39,8 @@
     "electron-updater": "6.6.2"
   },
   "devDependencies": {
-    "@playwright/test": "1.52.0",
-    "@tsconfig/node22": "22.0.1",
-    "@types/fs-extra": "11.0.4",
-    "@types/jsdom": "21.1.7",
-    "@types/node": "22.14.1",
-    "@vitejs/plugin-vue": "5.2.3",
-    "@vitest/eslint-plugin": "1.1.43",
-    "@vue/eslint-config-prettier": "10.2.0",
-    "@vue/eslint-config-typescript": "14.5.0",
-    "@vue/test-utils": "2.4.6",
-    "@vue/tsconfig": "0.7.0",
     "electron": "35.2.0",
-    "electron-builder": "26.0.12",
-    "eslint": "9.25.0",
-    "eslint-plugin-oxlint": "0.16.7",
-    "eslint-plugin-playwright": "2.2.0",
-    "eslint-plugin-vue": "10.0.0",
-    "jiti": "2.4.2",
-    "jsdom": "26.1.0",
-    "npm-run-all2": "7.0.2",
-    "oxlint": "0.16.7",
-    "pinia": "3.0.2",
-    "prettier": "3.5.3",
-    "typescript": "5.8.3",
-    "vite": "6.3.2",
-    "vite-plugin-vue-devtools": "7.7.5",
-    "vitest": "3.1.2",
-    "vue": "3.5.13",
-    "vue-router": "4.5.0",
-    "vue-tsc": "2.2.8"
+    "electron-builder": "26.0.12"
   },
   "engines": {
     "node": ">=20"

@@ -11,11 +11,113 @@ on:
 
 env:
   GH_TOKEN: ${{ secrets.GH_TOKEN }}
+  HUGO_VERSION: 0.87.0
+  BRANCH: release-1.24
 
 jobs:
+
+  before-build:
+
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        go-version: [ 1.16 ]
+
+    steps:
+
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Use GoLang ${{ matrix.go-version }}
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ matrix.go-version }}
+
+      - name: Build Hugo ${{ env.HUGO_VERSION }} Extended
+        run: |
+          curl -L https://github.com/gohugoio/hugo/archive/refs/tags/v${HUGO_VERSION}.tar.gz | tar -xz
+          cd "hugo-${HUGO_VERSION}"
+          go install --tags extended
+          $HOME/go/bin/hugo version
+
+      - name: Checkout Kubernetes Website repository
+        run: |
+          git clone --branch ${{ env.BRANCH }} --depth 1 https://github.com/kubernetes/website.git
+          cd website
+          git submodule update --init --recursive --depth 1
+
+      - name: Kubernetes Website Install dependencies
+        run: |
+          cd website
+          ls -lha
+          node -v
+          npm -v
+          npm ci
+
+      - name: Kubernetes Website use local static files
+        run: |
+          cd website
+          echo y | cp $GITHUB_WORKSPACE/config.toml .
+          sed -i "s#Kubernetes-Basics#kubernetes-basics#"                                                             content/zh-cn/docs/tutorials/_index.md
+          sed -i "s#京ICP备17074266号-3#鲁ICP备19009036号-1#"                                                           layouts/partials/footer.html
+          sed -i "s#https://www.googletagmanager.com/gtag/js#/gtag.js#"                                               layouts/partials/head.html
+          sed -i "s#https://cdn-images.mailchimp.com/embedcode/horizontal-slim-10_7.css#/horizontal-slim-10_7.css#"   layouts/index.html
+          sed -i "s#https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js#/bootstrap.min.js#"        themes/docsy/layouts/partials/scripts.html
+          sed -i "s#https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js#/popper.min.js#"        themes/docsy/layouts/partials/scripts.html
+          sed -i "s#https://fonts.googleapis.com/css#/Open+Sans.css#"                                                 themes/docsy/assets/scss/_variables.scss
+          sed -i "s#https://cdn.jsdelivr.net/gh/rastikerdar/vazir-font@v27.0.1/dist/font-face.css#/font-face.css#"    themes/docsy/assets/scss/rtl/_main.scss
+          sed -i "s#https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;500;600;700&display=swap#/Rubik.css#" themes/docsy/assets/scss/rtl/_main.scss
+          sed -i "s#https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700&display=swap#/Tajawal.css#" themes/docsy/assets/scss/rtl/_main.scss
+          sed -i "s#https://cdn.jsdelivr.net/gh/rastikerdar/vazir-font@v27.0.1/dist/font-face.css#/font-face.css#"    api-ref-generator/themes/docsy/assets/scss/rtl/_main.scss
+          find content -type f -name "*.html" -exec sed -i "s#https://katacoda.com/embed.js#/embed.js#" {} +
+          find layouts -type f -name "*" -exec sed -i "s#https://katacoda.com/embed.js#/embed.js#" {} +
+
+      - name: Build Kubernetes Website
+        run: |
+          cd website
+          sed -i "s#hugo#$HOME/go/bin/hugo#" Makefile
+          make build
+          ls -lha
+          pwd
+
+      - name: Kubernetes Website Download static files
+        run: |
+          cd website
+          echo '' > public/gtag.js
+          curl -o public/horizontal-slim-10_7.css 'https://cdn-images.mailchimp.com/embedcode/horizontal-slim-10_7.css'                                                      -A "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36"
+          sed -i "s#https://kubernetes.io/_common-resources/images/kub_video_banner_homepage.jpg#/kub_video_banner_homepage.jpg#"                                            public/index.html
+          sed -i "s#https://kubernetes.io/zh-cn/_common-resources/images/kub_video_banner_homepage.jpg#/kub_video_banner_homepage.jpg#"                                      public/zh-cn/index.html
+          curl -o public/kub_video_banner_homepage.jpg 'https://kubernetes.io/_common-resources/images/kub_video_banner_homepage.jpg'                                        -A "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36"
+          curl -o public/bootstrap.min.js 'https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js'                                                           -A "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36"
+          curl -o public/popper.min.js 'https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js'                                                           -A "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36"
+          curl -o public/Open+Sans.css 'https://fonts.googleapis.com/css?family=Open+Sans:300,300i,400,400i,700,700i'                                                        -A "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36"
+          sed -i "s#https://fonts.gstatic.com/s/opensans/v40/memvYaGs126MiZpBA-UvWbX2vVnXBbObj2OVTS-muw.woff2#/memvYaGs126MiZpBA-UvWbX2vVnXBbObj2OVTS-muw.woff2#"            public/Open+Sans.css
+          sed -i "s#https://fonts.gstatic.com/s/opensans/v40/memvYaGs126MiZpBA-UvWbX2vVnXBbObj2OVTSumu1aB.woff2#/memvYaGs126MiZpBA-UvWbX2vVnXBbObj2OVTSumu1aB.woff2#"        public/Open+Sans.css
+          sed -i "s#https://fonts.gstatic.com/s/opensans/v40/memtYaGs126MiZpBA-UFUIcVXSCEkx2cmqvXlWqWuU6F.woff2#/memtYaGs126MiZpBA-UFUIcVXSCEkx2cmqvXlWqWuU6F.woff2#"        public/Open+Sans.css
+          sed -i "s#https://fonts.gstatic.com/s/opensans/v40/memvYaGs126MiZpBA-UvWbX2vVnXBbObj2OVTSCmu1aB.woff2#/memvYaGs126MiZpBA-UvWbX2vVnXBbObj2OVTSCmu1aB.woff2#"        public/Open+Sans.css
+          curl -o public/memvYaGs126MiZpBA-UvWbX2vVnXBbObj2OVTS-muw.woff2 'https://fonts.gstatic.com/s/opensans/v40/memvYaGs126MiZpBA-UvWbX2vVnXBbObj2OVTS-muw.woff2'        -A "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36"
+          curl -o public/memvYaGs126MiZpBA-UvWbX2vVnXBbObj2OVTSumu1aB.woff2 'https://fonts.gstatic.com/s/opensans/v40/memvYaGs126MiZpBA-UvWbX2vVnXBbObj2OVTSumu1aB.woff2'    -A "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36"
+          curl -o public/memtYaGs126MiZpBA-UFUIcVXSCEkx2cmqvXlWqWuU6F.woff2 'https://fonts.gstatic.com/s/opensans/v40/memtYaGs126MiZpBA-UFUIcVXSCEkx2cmqvXlWqWuU6F.woff2'    -A "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36"
+          curl -o public/memvYaGs126MiZpBA-UvWbX2vVnXBbObj2OVTSCmu1aB.woff2 'https://fonts.gstatic.com/s/opensans/v40/memvYaGs126MiZpBA-UvWbX2vVnXBbObj2OVTSCmu1aB.woff2'    -A "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36"
+          curl -o public/rating.js 'https://polldaddy.com/js/rating/rating.js'                                                                                               -A "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36"
+          curl -o public/font-face.css 'https://cdn.jsdelivr.net/gh/rastikerdar/vazir-font@v27.0.1/dist/font-face.css'                                                       -A "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36"
+          curl -o public/Rubik.css 'https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;500;600;700&display=swap'                                                    -A "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36"
+          curl -o public/Tajawal.css 'https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700&display=swap'                                                    -A "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36"
+          echo '' > public/embed.js
+
+      - name: Upload release artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: artifacts
+          path: |
+            website/public
+
   build:
 
     runs-on: ${{ matrix.os }}
+
+    needs: before-build
 
     strategy:
       matrix:
@@ -46,26 +148,40 @@ jobs:
       - name: Install dependencies
         run: npm install
 
+      - name: Download website artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: artifacts
+          path: website/public
+
+      - name: Copy Kubernetes Website artifacts
+        shell: sh
+        run: |
+          ls -lha website/public
+          mkdir -p dist
+          cp -r website/public/* dist/
+          ls -lha dist
+
       - name: Mac Build with npm
         if: ${{ matrix.os == 'macos-latest' }}
         env:
           CSC_LINK: ${{ secrets.MAC_CERT_BASE64 }}
           CSC_KEY_PASSWORD: ${{ secrets.MAC_CERT_PASSWORD }}
-        run: npm run build
+        run: npm run build:publish
 
       - name: Windows Build with npm
         if: ${{ matrix.os == 'windows-latest' }}
         env:
           CSC_LINK: ${{ secrets.WINDOWS_CERT_BASE64 }}
           CSC_KEY_PASSWORD: ${{ secrets.WINDOWS_CERT_PASSWORD }}
-        run: npm run build
+        run: npm run build:publish
 
       - name: Linux Build with npm
         if: ${{ matrix.os == 'ubuntu-latest' }}
         env:
           CSC_LINK: ${{ secrets.LINUX_CERT_BASE64 }}
           CSC_KEY_PASSWORD: ${{ secrets.LINUX_CERT_PASSWORD }}
-        run: npm run build
+        run: npm run build:publish
 
       - name: List files in release folder
         shell: sh

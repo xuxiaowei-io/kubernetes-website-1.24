@@ -9,7 +9,7 @@ export default <Configuration>{
   // 打包产物名称，使用模板字符串动态生成，包含产品名、版本、平台和架构
   artifactName: '${productName}-${version}-${platform}-${arch}.${ext}',
   // 使用 asar 打包，将所有文件打包成一个 asar 归档文件
-  asar: true,
+  asar: false,
   // asar 打包后解压的文件（运行前会自动解压）
   asarUnpack: [],
   // 打包 删除 package.json 的 scripts
@@ -22,10 +22,14 @@ export default <Configuration>{
   generateUpdatesFilesForAllChannels: true,
   // 打包的文件
   files: [
-    // Vite 打包后的文件
+    // Kubernetes Website 打包后的文件
     'dist/**/*',
+    // 主进程与渲染进程的异步通信
+    'ipc-main.js',
     // 程序入口文件
     'main.js',
+    // 菜单配置文件
+    'menu.js',
     // 预加载文件
     'preload.js',
     // 更新配置文件
@@ -36,17 +40,21 @@ export default <Configuration>{
     output: 'release/${version}',
   },
   mac: {
+    // 应用图标
+    icon: 'build/icon.icns',
+    // 开发人员工具
+    category: 'public.app-category.developer-tools',
     target: [
       {
         target: 'dmg',
-        arch: ['arm64', 'x64', 'universal'],
+        arch: ['arm64', 'x64'],
       },
       // 无论如何都要启用 zip，否则会影响 'dmg' 包中的自动更新
       {
         target: 'zip',
-        arch: ['arm64', 'x64', 'universal'],
+        arch: ['arm64', 'x64'],
       },
-    ],
+    ]
   },
   linux: {
     target: [
@@ -55,5 +63,16 @@ export default <Configuration>{
         arch: ['x64', 'arm64'],
       },
     ],
+  },
+  win: {
+    icon: 'build/256x256.png',
+  },
+  nsis: {
+    // 禁用一键安装
+    oneClick: false,
+    // 为所有用户安装
+    perMachine: true,
+    // 允许修改安装目录
+    allowToChangeInstallationDirectory: true,
   },
 }

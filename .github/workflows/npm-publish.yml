@@ -61,6 +61,7 @@ jobs:
           echo y | cp $GITHUB_WORKSPACE/config.toml .
           sed -i "s#Kubernetes-Basics#kubernetes-basics#"                                                             content/zh-cn/docs/tutorials/_index.md
           sed -i "s#京ICP备17074266号-3#鲁ICP备19009036号-1#"                                                           layouts/partials/footer.html
+          sed -i "s#/releases#/releases/#"                                                                            layouts/partials/navbar-version-selector.html
           sed -i "s#https://www.googletagmanager.com/gtag/js#/gtag.js#"                                               layouts/partials/head.html
           sed -i "s#https://cdn-images.mailchimp.com/embedcode/horizontal-slim-10_7.css#/horizontal-slim-10_7.css#"   layouts/index.html
           sed -i "s#https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js#/bootstrap.min.js#"        themes/docsy/layouts/partials/scripts.html
